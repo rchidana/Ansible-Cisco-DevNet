@@ -7,7 +7,7 @@
   tasks:
     - name: GATHER ROUTER FACTS
       ios_facts:
-	  
+
     - name: DISPLAY VERSION
       debug:
         msg: "The IOS version is: {{ ansible_net_version }}"
