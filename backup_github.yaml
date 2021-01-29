@@ -1,0 +1,34 @@
+---
+- name: BACKUP ROUTER CONFIGURATIONS
+  hosts: routers
+  connection: network_cli
+  gather_facts: no
+  vars:
+   github_dir: "/home/vagrant/cisco_backups"
+
+  tasks:
+    - name: BACKUP THE CONFIG
+      ios_config:
+        backup: yes
+      register: config_output
+
+    - name: RENAME BACKUP
+      copy:
+        src: "{{config_output.backup_path}}"
+        dest: "{{github_dir}}/{{inventory_hostname}}.config"
+
+    - name: Store date as fact
+      set_fact:
+        myCommitMessage : "Backed Up on : {{ lookup('pipe', 'date') }}"
+
+    - name: Check for git status
+      shell: "cd {{github_dir}} && git status"
+      register: git_changed
+
+    - name: Print git status
+      debug:
+        var: git_changed
+
+    - name: Commit & Push only if there are Git local changes
+      shell: "cd {{github_dir}} && git add . && git commit -m '{{myCommitMessage}}' && git push origin main"
+      when: git_changed.stdout.find("nothing to commit, working tree clean") == -1
